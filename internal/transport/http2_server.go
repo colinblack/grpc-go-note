@@ -607,6 +607,7 @@ func (t *http2Server) handleData(f *http2.DataFrame) {
 		t.controlBuf.put(bdpPing)
 	}
 	// Select the right stream to dispatch.
+	//通过streamid获取stream
 	s, ok := t.getStream(f)
 	if !ok {
 		return
@@ -628,6 +629,8 @@ func (t *http2Server) handleData(f *http2.DataFrame) {
 		// TODO(bradfitz, zhaoq): A copy is required here because there is no
 		// guarantee f.Data() is consumed before the arrival of next frame.
 		// Can this copy be eliminated?
+
+		//将buffer写入stream中
 		if len(f.Data()) > 0 {
 			buffer := t.bufferPool.get()
 			buffer.Reset()
@@ -635,6 +638,7 @@ func (t *http2Server) handleData(f *http2.DataFrame) {
 			s.write(recvMsg{buffer: buffer})
 		}
 	}
+	//表示gRPC请求消息已经读取完成
 	if f.Header().Flags.Has(http2.FlagDataEndStream) {
 		// Received the end of stream from the client.
 		s.compareAndSwapState(streamActive, streamReadDone)
